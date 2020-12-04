@@ -29,6 +29,7 @@
 		},
 		"fontSize": true,
 		"lineHeight": true,
+		"__experimentalFontWeight": true,
 		"__experimentalSelector": {
 			"core/heading/h1": {
 				"selector": "h1",
