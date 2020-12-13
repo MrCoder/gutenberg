@@ -7,12 +7,7 @@ import mergeRefs from 'react-merge-refs';
 /**
  * WordPress dependencies
  */
-import {
-	useRef,
-	useState,
-	useLayoutEffect,
-	useCallback,
-} from '@wordpress/element';
+import { useRef, useState, useLayoutEffect } from '@wordpress/element';
 import { getRectangleFromRange } from '@wordpress/dom';
 import { ESCAPE } from '@wordpress/keycodes';
 import deprecated from '@wordpress/deprecated';
@@ -422,13 +417,6 @@ const Popover = ( {
 	const focusReturnRef = useFocusReturn();
 	const focusOnMountRef = useFocusOnMount( focusOnMount );
 	const focusOutsideProps = useFocusOutside( handleOnFocusOutside );
-	const allRefs = [
-		containerRef,
-		constrainedTabbingRef,
-		focusReturnRef,
-		focusOnMountRef,
-	];
-	const mergedRefs = useCallback( mergeRefs( allRefs ), allRefs );
 
 	// Event handlers
 	const maybeClose = ( event ) => {
@@ -527,7 +515,12 @@ const Popover = ( {
 			{ ...contentProps }
 			onKeyDown={ maybeClose }
 			{ ...focusOutsideProps }
-			ref={ mergedRefs }
+			ref={ mergeRefs( [
+				containerRef,
+				constrainedTabbingRef,
+				focusReturnRef,
+				focusOnMountRef,
+			] ) }
 			tabIndex="-1"
 		>
 			{ isExpanded && <ScrollLock /> }

@@ -1,4 +1,9 @@
 /**
+ * External dependencies
+ */
+import memize from 'memize';
+
+/**
  * WordPress dependencies
  */
 import { useRef, useCallback, useEffect } from '@wordpress/element';
@@ -35,44 +40,47 @@ function useFocusReturn( onFocusReturn ) {
 		onFocusReturnRef.current = onFocusReturn;
 	}, [] );
 
-	const ref = useCallback( ( newNode ) => {
-		const updateLastFocusedRef = ( { target } ) => {
-			isFocused.current = newNode && newNode.contains( target );
-		};
+	const ref = useCallback(
+		memize( ( newNode ) => {
+			const updateLastFocusedRef = ( { target } ) => {
+				isFocused.current = newNode && newNode.contains( target );
+			};
 
-		// Unmounting the reference
-		if ( ! newNode && focusedBeforeMount.current ) {
+			// Unmounting the reference
+			if ( ! newNode && focusedBeforeMount.current ) {
+				if ( newNode?.ownerDocument ) {
+					newNode.ownerDocument.removeEventListener(
+						'focusin',
+						updateLastFocusedRef
+					);
+				}
+
+				if ( ! isFocused.current ) {
+					return;
+				}
+
+				// Defer to the component's own explicit focus return behavior,
+				// if specified. This allows for support that the `onFocusReturn` decides to allow the
+				// default behavior to occur under some conditions.
+				if ( onFocusReturnRef.current ) {
+					onFocusReturnRef.current();
+					return;
+				}
+
+				focusedBeforeMount.current.focus();
+			}
+
+			// Mounting the new reference
+			focusedBeforeMount.current = newNode?.ownerDocument.activeElement;
 			if ( newNode?.ownerDocument ) {
-				newNode.ownerDocument.removeEventListener(
+				newNode.ownerDocument.addEventListener(
 					'focusin',
 					updateLastFocusedRef
 				);
 			}
-
-			if ( ! isFocused.current ) {
-				return;
-			}
-
-			// Defer to the component's own explicit focus return behavior,
-			// if specified. This allows for support that the `onFocusReturn` decides to allow the
-			// default behavior to occur under some conditions.
-			if ( onFocusReturnRef.current ) {
-				onFocusReturnRef.current();
-				return;
-			}
-
-			focusedBeforeMount.current.focus();
-		}
-
-		// Mounting the new reference
-		focusedBeforeMount.current = newNode?.ownerDocument.activeElement;
-		if ( newNode?.ownerDocument ) {
-			newNode.ownerDocument.addEventListener(
-				'focusin',
-				updateLastFocusedRef
-			);
-		}
-	}, [] );
+		} ),
+		[]
+	);
 
 	return ref;
 }
