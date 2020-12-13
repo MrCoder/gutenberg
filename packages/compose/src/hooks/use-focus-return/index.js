@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useRef, useCallback, useEffect } from '@wordpress/element';
+import { useRef, useEffect, useCallback } from '@wordpress/element';
 
 /**
  * When opening modals/sidebars/dialogs, the focus
@@ -29,52 +29,34 @@ import { useRef, useCallback, useEffect } from '@wordpress/element';
  */
 function useFocusReturn( onFocusReturn ) {
 	const focusedBeforeMount = useRef();
-	const isFocused = useRef( false );
 	const onFocusReturnRef = useRef( onFocusReturn );
+
 	useEffect( () => {
 		onFocusReturnRef.current = onFocusReturn;
-	}, [] );
+	}, [ onFocusReturn ] );
 
-	const ref = useCallback( ( newNode ) => {
-		const updateLastFocusedRef = ( { target } ) => {
-			isFocused.current = newNode && newNode.contains( target );
-		};
-
-		// Unmounting the reference
-		if ( ! newNode && focusedBeforeMount.current ) {
-			if ( newNode?.ownerDocument ) {
-				newNode.ownerDocument.removeEventListener(
-					'focusin',
-					updateLastFocusedRef
-				);
-			}
-
-			if ( ! isFocused.current ) {
-				return;
-			}
-
-			// Defer to the component's own explicit focus return behavior,
-			// if specified. This allows for support that the `onFocusReturn` decides to allow the
-			// default behavior to occur under some conditions.
+	useEffect(
+		() => () => {
+			// Defer to the component's own explicit focus return behavior, if
+			// specified. This allows for support that the `onFocusReturn`
+			// decides to allow the default behavior to occur under some
+			// conditions.
 			if ( onFocusReturnRef.current ) {
 				onFocusReturnRef.current();
-				return;
+			} else {
+				focusedBeforeMount.current.focus();
 			}
+		},
+		[]
+	);
 
-			focusedBeforeMount.current.focus();
+	return useCallback( ( node ) => {
+		if ( ! node || focusedBeforeMount.current ) {
+			return;
 		}
 
-		// Mounting the new reference
-		focusedBeforeMount.current = newNode?.ownerDocument.activeElement;
-		if ( newNode?.ownerDocument ) {
-			newNode.ownerDocument.addEventListener(
-				'focusin',
-				updateLastFocusedRef
-			);
-		}
-	}, [] );
-
-	return ref;
+		focusedBeforeMount.current = node.ownerDocument.activeElement;
+	} );
 }
 
 export default useFocusReturn;
