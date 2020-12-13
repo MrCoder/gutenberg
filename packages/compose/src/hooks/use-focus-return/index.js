@@ -35,8 +35,8 @@ function useFocusReturn( onFocusReturn ) {
 		onFocusReturnRef.current = onFocusReturn;
 	}, [ onFocusReturn ] );
 
-	useEffect(
-		() => () => {
+	return useCallback( ( node ) => {
+		if ( ! node ) {
 			const isFocused = ref.current.contains(
 				ref.current.ownerDocument.activeElement
 			);
@@ -54,20 +54,18 @@ function useFocusReturn( onFocusReturn ) {
 			} else {
 				focusedBeforeMount.current.focus();
 			}
-		},
-		[]
-	);
 
-	// Once the node mounts, set the active element at that time.
-	return useCallback( ( node ) => {
+			return;
+		}
+
 		ref.current = node;
 
-		if ( ! node || focusedBeforeMount.current ) {
+		if ( focusedBeforeMount.current ) {
 			return;
 		}
 
 		focusedBeforeMount.current = node.ownerDocument.activeElement;
-	} );
+	}, [] );
 }
 
 export default useFocusReturn;
