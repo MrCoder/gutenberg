@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useRef, useEffect, useCallback } from '@wordpress/element';
+import { useRef, useCallback, useEffect } from '@wordpress/element';
 
 /**
  * When opening modals/sidebars/dialogs, the focus
@@ -28,15 +28,23 @@ import { useRef, useEffect, useCallback } from '@wordpress/element';
  * ```
  */
 function useFocusReturn( onFocusReturn ) {
+	const ref = useRef();
 	const focusedBeforeMount = useRef();
 	const onFocusReturnRef = useRef( onFocusReturn );
-
 	useEffect( () => {
 		onFocusReturnRef.current = onFocusReturn;
 	}, [ onFocusReturn ] );
 
 	useEffect(
 		() => () => {
+			const isFocused = ref.current.contains(
+				ref.current.ownerDocument.activeElement
+			);
+
+			if ( ! isFocused ) {
+				return;
+			}
+
 			// Defer to the component's own explicit focus return behavior, if
 			// specified. This allows for support that the `onFocusReturn`
 			// decides to allow the default behavior to occur under some
@@ -50,7 +58,10 @@ function useFocusReturn( onFocusReturn ) {
 		[]
 	);
 
+	// Once the node mounts, set the active element at that time.
 	return useCallback( ( node ) => {
+		ref.current = node;
+
 		if ( ! node || focusedBeforeMount.current ) {
 			return;
 		}
